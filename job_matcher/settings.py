@@ -31,6 +31,11 @@ ALLOWED_HOSTS = [
     '127.0.0.1'
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://recommendation-1nzk.onrender.com'
+]
+
+
 
 # URL Configuration
 APPEND_SLASH = True
