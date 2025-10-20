@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ job.title }} - Job Matcher{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 px-4">
+    <div class="bg-white shadow rounded-lg">
+        <!-- Job Header -->
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ job.title }}</h1>
+                    <div class="mt-1 flex items-center">
+                        <span class="text-gray-600">{{ job.company }}</span>
+                        <span class="mx-2">•</span>
+                        <span class="text-gray-600">{{ job.location }}</span>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    {% if job.salary_min and job.salary_max %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        £{{ job.salary_min|floatformat:0 }} - £{{ job.salary_max|floatformat:0 }}
+                    </span>
+                    {% endif %}
+                    {% if job.is_remote %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        Remote
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Content -->
+        <div class="px-6 py-4">
+            <!-- Actions -->
+            <div class="mb-6 flex space-x-4">
+                <a href="{{ job.external_url }}" target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                    Apply Now
+                </a>
+                <form method="post" action="{% url 'save_job' job.id %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Save Job
+                    </button>
+                </form>
+            </div>
+
+            <!-- Job Description -->
+            <div class="prose max-w-none">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Job Description</h2>
+                <div class="text-gray-600 space-y-4">
+                    {{ job.description|linebreaks }}
+                </div>
+            </div>
+
+            <!-- Job Details -->
+            <div class="mt-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Job Details</h2>
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Job Type</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ job.get_job_type_display }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Category</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ job.category|title }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Posted Date</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ job.posted_date|date }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

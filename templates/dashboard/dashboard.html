@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Job Matcher{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Welcome, {{ user.username }}!</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Recommended Jobs Section -->
+        <div>
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Recommended Jobs</h2>
+            <div class="space-y-4">
+                {% if current_cv %}
+                    {% for recommendation in recommended_jobs %}
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">{{ recommendation.job.title }}</h3>
+                                <p class="text-gray-600">{{ recommendation.job.company }}</p>
+                                <p class="text-sm text-gray-500 mt-1">{{ recommendation.job.location }}</p>
+                                <div class="mt-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Match Score: {{ recommendation.match_score|floatformat:1 }}%
+                                    </span>
+                                </div>
+                                {% if recommendation.matching_skills %}
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500">Matching Skills:</p>
+                                    <div class="mt-1 flex flex-wrap gap-2">
+                                        {% for skill in recommendation.matching_skills %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ skill }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <a href="{{ recommendation.job.external_url }}" target="_blank" 
+                                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    View Job
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <p class="text-gray-600">We're currently finding the best matches for your CV. Check back soon!</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <p class="text-gray-600">No recommendations yet. Upload your CV to get started!</p>
+                        <div class="mt-4">
+                            <a href="{% url 'upload_cv' %}" 
+                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Upload CV
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Latest Jobs Section -->
+        <div>
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Latest Jobs</h2>
+            <div class="space-y-4">
+                {% for job in latest_jobs %}
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">{{ job.title }}</h3>
+                            <p class="text-gray-600">{{ job.company }}</p>
+                            <p class="text-sm text-gray-500 mt-1">{{ job.location }}</p>
+                            {% if job.salary_min or job.salary_max %}
+                            <p class="text-sm text-gray-600 mt-1">
+                                Salary: 
+                                {% if job.salary_min %}£{{ job.salary_min|floatformat:0 }}{% endif %}
+                                {% if job.salary_min and job.salary_max %} - {% endif %}
+                                {% if job.salary_max %}£{{ job.salary_max|floatformat:0 }}{% endif %}
+                            </p>
+                            {% endif %}
+                            {% if job.job_type %}
+                            <div class="mt-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ job.job_type|title }}
+                                </span>
+                                {% if job.is_remote %}
+                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Remote
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <a href="{{ job.external_url }}" target="_blank" 
+                               class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                View Job
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <p class="text-gray-600">No jobs available at the moment.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Job Matcher{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h2 class="text-lg font-medium text-gray-900">Profile Information</h2>
+                <p class="mt-1 text-sm text-gray-500">Update your personal and professional details.</p>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+                <form method="post" class="space-y-8 divide-y divide-gray-200">
+                    {% csrf_token %}
+                    <div class="space-y-8 sm:space-y-5">
+                        {% for field in form %}
+                            <div class="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:pt-5 sm:px-6">
+                                {% if field.name == 'preferred_categories' %}
+                                <div class="sm:col-span-3">
+                                    <label class="block text-sm font-medium text-gray-700 mb-4">
+                                        {{ field.label }}
+                                    </label>
+                                    <div class="mt-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {% for value, label in field.field.choices %}
+                                        <div class="relative flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input id="{{ field.id_for_label }}_{{ forloop.counter }}"
+                                                       name="{{ field.name }}"
+                                                       value="{{ value }}"
+                                                       type="checkbox"
+                                                       {% if value in field.value %}checked{% endif %}
+                                                       class="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded">
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="{{ field.id_for_label }}_{{ forloop.counter }}"
+                                                       class="font-medium text-gray-700">{{ label }}</label>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="sm:col-span-2">
+                                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                        {{ field.label }}
+                                    </label>
+                                    <div class="mt-1">
+                                        {{ field }}
+                                    </div>
+                                    {% if field.help_text %}
+                                    <p class="mt-2 text-sm text-gray-500">{{ field.help_text }}</p>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ field.errors|join:", " }}</p>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="pt-5 px-6">
+                        <div class="flex justify-end">
+                            <button type="submit"
+                                    class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- CV Section -->
+        <div class="mt-8 bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h2 class="text-lg font-medium text-gray-900">CV Management</h2>
+                <p class="mt-1 text-sm text-gray-500">Upload or update your CV for job matching.</p>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                {% if current_cv %}
+                <div class="space-y-4">
+                    <h3 class="text-md font-medium text-gray-700">Current CV</h3>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Uploaded on: {{ current_cv.created_at|date }}</p>
+                            <p class="text-sm text-gray-600">Skills detected: {{ current_cv.extracted_skills|join:", " }}</p>
+                        </div>
+                        <a href="{% url 'upload_cv' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Replace CV
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-sm text-gray-600 mb-4">No CV uploaded yet.</p>
+                    <a href="{% url 'upload_cv' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        Upload CV
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Debug Info -->
+        <div class="mt-8 p-4 bg-gray-100 rounded">
+            <p class="text-sm text-gray-600">Debug Info:</p>
+            <p class="text-sm text-gray-600">Current CV ID: {{ current_cv.id|default:"None" }}</p>
+            <p class="text-sm text-gray-600">Number of recommendations: {{ recommendations|length }}</p>
+        </div>
+
+        <!-- Job Recommendations Section -->
+        {% if recommendations %}
+        <div class="mt-8 bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h2 class="text-lg font-medium text-gray-900">Job Recommendations</h2>
+                <p class="mt-1 text-sm text-gray-500">Jobs matching your CV and skills.</p>
+            </div>
+            <div class="border-t border-gray-200">
+                <ul class="divide-y divide-gray-200">
+                    {% for rec in recommendations %}
+                    <li class="px-4 py-5 sm:px-6">
+                        <div class="flex justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">{{ rec.job.title }}</h3>
+                                <p class="mt-1 text-sm text-gray-500">{{ rec.job.company }}</p>
+                                <p class="mt-1 text-sm text-gray-500">Location: {{ rec.job.location }}</p>
+                                <div class="mt-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Match Score: {{ rec.match_score|floatformat:1 }}%
+                                    </span>
+                                    {% if rec.matching_skills %}
+                                    <div class="mt-2">
+                                        <p class="text-sm text-gray-500">Matching Skills:</p>
+                                        <div class="mt-1 flex flex-wrap gap-2">
+                                            {% for skill in rec.matching_skills %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                {{ skill }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <a href="{{ rec.job.external_url }}" target="_blank" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                    View Job
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

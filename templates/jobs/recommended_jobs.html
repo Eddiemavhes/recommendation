@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Recommended Jobs - Job Matcher{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="px-4 py-5 sm:px-6">
+        <h1 class="text-2xl font-bold text-gray-900">
+            Personalized Job Recommendations
+        </h1>
+        {% if has_recommendations %}
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                Based on your CV and skills profile
+            </p>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+    <div class="px-4 sm:px-6">
+        {% for message in messages %}
+        <div class="rounded-md {{ message.tags }} bg-blue-50 p-4 mb-4">
+            <div class="flex">
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">
+                        {{ message }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if has_recommendations %}
+        <!-- CV Data Summary -->
+        {% if cv_data %}
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6 mx-4 sm:mx-6">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Your Profile
+                </h3>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-3">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Experience Level</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ cv_data.experience_level }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Years of Experience</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ cv_data.years_experience }}</dd>
+                    </div>
+                    <div class="sm:col-span-3">
+                        <dt class="text-sm font-medium text-gray-500">Key Skills</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% for skill in cv_data.skills|slice:":10" %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2 mb-2">
+                                {{ skill }}
+                            </span>
+                            {% endfor %}
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Job Recommendations -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg mx-4 sm:mx-6">
+            <ul class="divide-y divide-gray-200">
+                {% for job in jobs %}
+                <li class="p-4 hover:bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-medium text-blue-600 truncate">
+                                    {{ job.title }}
+                                </h3>
+                                <div class="ml-4 flex-shrink-0">
+                                    <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium {% if job.match_score >= 80 %}bg-green-100 text-green-800{% elif job.match_score >= 60 %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ job.match_score|floatformat:1 }}% Match
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-1">
+                                <p class="text-sm text-gray-600">{{ job.company }} • {{ job.location }}</p>
+                            </div>
+                            {% if job.matching_skills %}
+                            <div class="mt-2">
+                                <p class="text-xs text-gray-500">Matching Skills:</p>
+                                <div class="mt-1">
+                                    {% for skill in job.matching_skills|slice:":5" %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">
+                                        {{ skill }}
+                                    </span>
+                                    {% endfor %}
+                                    {% if job.matching_skills|length > 5 %}
+                                    <span class="text-xs text-gray-500">+{{ job.matching_skills|length|add:"-5" }} more</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="ml-4">
+                            <a href="{% url 'job_detail' job.id %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="p-4">
+                    <p class="text-center text-gray-500">No matching jobs found. Try updating your CV or skills.</p>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+        <!-- No CV Upload State -->
+        <div class="text-center px-4 sm:px-6">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V6a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No CV uploaded</h3>
+            <p class="mt-1 text-sm text-gray-500">Upload your CV to get personalized job recommendations.</p>
+            <div class="mt-6">
+                <a href="{% url 'upload_cv' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Upload CV
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

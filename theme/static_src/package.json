@@ -1,0 +1,17 @@
+{
+  "name": "job-matcher-tailwind",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "npm run dev",
+    "build": "npm run build:css",
+    "build:css": "tailwindcss -i ./src/styles.css -o ../static/css/dist/styles.css --minify",
+    "dev": "tailwindcss -i ./src/styles.css -o ../static/css/dist/styles.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "tailwindcss": "^3.3.3"
+  }
+}
