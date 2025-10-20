@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-g1oi5=@0ggna$t=k9pd##xe+#v5z#dyk2odv$o-y=k4#-b@km8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'recommendation-1nzk.onrender.com',
+    'localhost',
+    '127.0.0.1'
+]
+
 
 # URL Configuration
 APPEND_SLASH = True
