@@ -25,15 +25,18 @@ SECRET_KEY = 'django-insecure-g1oi5=@0ggna$t=k9pd##xe+#v5z#dyk2odv$o-y=k4#-b@km8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'recommendation-1nzk.onrender.com',
-    'localhost',
-    '127.0.0.1'
-]
+import os
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://recommendation-1nzk.onrender.com'
-]
+# Dynamically set allowed hosts and CSRF trusted origins for Render
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS = [RENDER_EXTERNAL_HOSTNAME, 'localhost', '127.0.0.1']
+    CSRF_TRUSTED_ORIGINS = [f"https://{RENDER_EXTERNAL_HOSTNAME}"]
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+    CSRF_TRUSTED_ORIGINS = ['http://localhost']
+
 
 
 
