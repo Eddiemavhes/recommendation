@@ -34,11 +34,31 @@ except Exception as e:
 "
 
 echo "Running database migrations..."
-python manage.py makemigrations --verbosity 2
-python manage.py migrate --verbosity 2
-
-echo "Verifying migrations..."
+export DJANGO_SETTINGS_MODULE=job_matcher.production
+echo "Current migrations status:"
 python manage.py showmigrations
+
+echo "Making migrations..."
+python manage.py makemigrations accounts --verbosity 2
+python manage.py makemigrations --verbosity 2
+
+echo "Applying migrations..."
+python manage.py migrate --verbosity 2 --no-input
+
+echo "Verifying final migrations status:"
+python manage.py showmigrations
+
+echo "Verifying accounts_user table..."
+python manage.py shell -c "
+from django.db import connection
+try:
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT COUNT(*) FROM accounts_user')
+        print('accounts_user table exists and has', cursor.fetchone()[0], 'records')
+except Exception as e:
+    print('Error checking accounts_user table:', str(e))
+    exit(1)
+"
 
 echo "Testing Django database connection..."
 python manage.py shell -c "

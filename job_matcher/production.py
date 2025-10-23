@@ -22,10 +22,14 @@ LOGGING = {
 DATABASE_URL = 'postgresql://job_matcher_user:3AvZ3UDbTTI66biUpBNippV0K0ajLg3y@dpg-d3sdt7s9c44c73co21vg-a/job_matcher'
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'job_matcher',
+        'USER': 'job_matcher_user',
+        'PASSWORD': '3AvZ3UDbTTI66biUpBNippV0K0ajLg3y',
+        'HOST': 'dpg-d3sdt7s9c44c73co21vg-a',
+        'PORT': '5432',
+    }
 }
 
 # Allowed hosts
