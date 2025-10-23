@@ -9,6 +9,7 @@ echo "Current working directory:"
 pwd
 
 echo "Installing dependencies..."
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 
 echo "Database URL (censored):"
@@ -18,6 +19,8 @@ echo "Collecting static files..."
 python manage.py collectstatic --no-input
 
 echo "Running database migrations..."
+python manage.py makemigrations
+python manage.py migrate
 python manage.py showmigrations
 python manage.py migrate --plan
 python manage.py migrate

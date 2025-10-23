@@ -2,7 +2,7 @@ services:
   - type: web
     name: job-recommendation-system
     env: python
-    buildCommand: "./build.sh"
+    buildCommand: "chmod +x build.sh && ./build.sh"
     startCommand: "DJANGO_SETTINGS_MODULE=job_matcher.production gunicorn job_matcher.wsgi:application"
     envVars:
       - key: DATABASE_URL
