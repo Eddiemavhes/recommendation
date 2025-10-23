@@ -16,7 +16,10 @@ echo "Database URL (censored):"
 echo ${DATABASE_URL:0:20}...
 
 echo "Collecting static files..."
-python manage.py collectstatic --no-input
+export DJANGO_SETTINGS_MODULE=job_matcher.production
+echo "Creating staticfiles directory..."
+mkdir -p staticfiles
+python manage.py collectstatic --no-input -v 2
 
 echo "Running database migrations..."
 python manage.py makemigrations
