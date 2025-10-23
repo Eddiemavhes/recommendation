@@ -1,7 +1,7 @@
 from .settings import *
 
-# Temporarily enable debug for troubleshooting
-DEBUG = True
+# Disable debug in production
+DEBUG = False
 
 # Configure logging
 LOGGING = {
@@ -18,18 +18,14 @@ LOGGING = {
     },
 }
 
-# Configure the production database
-DATABASE_URL = 'postgresql://job_matcher_user:3AvZ3UDbTTI66biUpBNippV0K0ajLg3y@dpg-d3sdt7s9c44c73co21vg-a/job_matcher'
+# Configure the production database using environment variable
+import dj_database_url
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'job_matcher',
-        'USER': 'job_matcher_user',
-        'PASSWORD': '3AvZ3UDbTTI66biUpBNippV0K0ajLg3y',
-        'HOST': 'dpg-d3sdt7s9c44c73co21vg-a',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL'),
+        conn_max_age=600
+    )
 }
 
 # Allowed hosts
