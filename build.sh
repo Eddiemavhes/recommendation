@@ -21,20 +21,34 @@ echo "Creating staticfiles directory..."
 mkdir -p staticfiles
 python manage.py collectstatic --no-input -v 2
 
+echo "Testing database connection..."
+python manage.py shell -c "
+import psycopg2
+import os
+try:
+    conn = psycopg2.connect('postgresql://job_matcher_user:3AvZ3UDbTTI66biUpBNippV0K0ajLg3y@dpg-d3sdt7s9c44c73co21vg-a/job_matcher')
+    print('PostgreSQL connection successful!')
+    conn.close()
+except Exception as e:
+    print('PostgreSQL connection failed:', e)
+"
+
 echo "Running database migrations..."
 python manage.py makemigrations --verbosity 2
-python manage.py showmigrations
 python manage.py migrate --verbosity 2
 
-echo "Checking database connection..."
+echo "Verifying migrations..."
+python manage.py showmigrations
+
+echo "Testing Django database connection..."
 python manage.py shell -c "
 from django.db import connection
 try:
     with connection.cursor() as cursor:
         cursor.execute('SELECT 1')
-        print('Database connection successful!')
+        print('Django database connection successful!')
 except Exception as e:
-    print('Database connection failed:', e)
+    print('Django database connection failed:', e)
 "
 python manage.py showmigrations
 python manage.py migrate --plan
