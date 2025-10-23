@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: job-recommendation-system
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "DJANGO_SETTINGS_MODULE=job_matcher.production gunicorn job_matcher.wsgi:application"
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://job_matcher_user:3AvZ3UDbTTI66biUpBNippV0K0ajLg3y@dpg-d3sdt7s9c44c73co21vg-a/job_matcher
+      - key: PYTHON_VERSION
+        value: 3.13.4
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SETTINGS_MODULE
+        value: job_matcher.production
+      - key: ADZUNA_APP_ID
+        value: 394f4569
+      - key: ADZUNA_API_KEY
+        value: b056e7a468781976de403fe611e052eb

@@ -1,6 +1,8 @@
 # Web Framework
 Django>=4.2
 django-tailwind>=3.6
+dj-database-url>=2.1.0  # Database configuration
+psycopg2-binary>=2.9.9  # PostgreSQL adapter
 
 # PDF Processing
 PyPDF2>=3.0.0
