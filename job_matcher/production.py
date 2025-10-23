@@ -1,6 +1,22 @@
 from .settings import *
 
-DEBUG = False
+# Temporarily enable debug for troubleshooting
+DEBUG = True
+
+# Configure logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
 
 # Configure the production database
 DATABASES = {
@@ -9,6 +25,10 @@ DATABASES = {
         conn_max_age=600,
     )
 }
+
+# Allowed hosts
+ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com']
 
 # Static files configuration
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
