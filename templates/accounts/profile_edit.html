@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile - Job Matcher{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                    <h2 class="text-lg leading-6 font-medium text-gray-900">
+                        Profile Settings
+                    </h2>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                        Manage your personal information and preferences
+                    </p>
+                </div>
+
+                <form method="POST" class="border-t border-gray-200">
+                    {% csrf_token %}
+                    <div class="px-4 py-5 space-y-6 sm:p-6">
+                        {% for field in form %}
+                        <div class="grid grid-cols-3 gap-6">
+                            <div class="col-span-3 sm:col-span-2">
+                                <label for="{{ field.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700">
+                                    {{ field.label }}
+                                </label>
+                                <div class="mt-1 flex rounded-md shadow-sm">
+                                    {{ field }}
+                                </div>
+                                {% if field.help_text %}
+                                <p class="mt-2 text-sm text-gray-500">{{ field.help_text }}</p>
+                                {% endif %}
+                                {% if field.errors %}
+                                <div class="mt-2">
+                                    {% for error in field.errors %}
+                                    <p class="text-red-600 text-sm">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                        <button type="submit"
+                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Password Change Section -->
+            <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Change Password
+                    </h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                        Update your password to keep your account secure
+                    </p>
+                </div>
+
+                <form method="POST" action="{% url 'password_change' %}" class="border-t border-gray-200">
+                    {% csrf_token %}
+                    <div class="px-4 py-5 space-y-6 sm:p-6">
+                        <div class="grid grid-cols-3 gap-6">
+                            <div class="col-span-3 sm:col-span-2">
+                                <label for="old_password" class="block text-sm font-medium text-gray-700">
+                                    Current Password
+                                </label>
+                                <div class="mt-1">
+                                    <input type="password" name="old_password" id="old_password" required
+                                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-6">
+                            <div class="col-span-3 sm:col-span-2">
+                                <label for="new_password1" class="block text-sm font-medium text-gray-700">
+                                    New Password
+                                </label>
+                                <div class="mt-1">
+                                    <input type="password" name="new_password1" id="new_password1" required
+                                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-6">
+                            <div class="col-span-3 sm:col-span-2">
+                                <label for="new_password2" class="block text-sm font-medium text-gray-700">
+                                    Confirm New Password
+                                </label>
+                                <div class="mt-1">
+                                    <input type="password" name="new_password2" id="new_password2" required
+                                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                        <button type="submit"
+                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Change Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
