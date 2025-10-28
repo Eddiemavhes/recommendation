@@ -5,24 +5,19 @@ from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm
 
 def login_view(request):
-    # Redirect if user is already logged in
+    """Handle user login"""
+    # Redirect if already logged in
     if request.user.is_authenticated:
-        messages.info(request, 'You are already logged in.')
         return redirect('dashboard')
 
-    # Handle login form submission
+    # Handle form submission
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-        password = request.POST.get('password', '')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
         
-        # Validate input
-        if not username:
-            messages.error(request, 'Please enter your username.')
-            return render(request, 'accounts/login.html')
-            
-        if not password:
-            messages.error(request, 'Please enter your password.')
-            return render(request, 'accounts/login.html')
+        # Basic validation
+        if not username or not password:
+            messages.error(request, 'Please enter both username and password.')
             
         # Authenticate user
         user = authenticate(request, username=username, password=password)
