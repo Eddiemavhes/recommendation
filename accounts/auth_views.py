@@ -44,9 +44,8 @@ def register_view(request):
         if form.is_valid():
             try:
                 user = form.save()
-                login(request, user)
-                messages.success(request, 'Welcome! Your account has been created successfully.')
-                return redirect('profile')
+                messages.success(request, 'Account created successfully! Please log in with your credentials.')
+                return redirect('login')
             except Exception as e:
                 messages.error(request, f'Registration failed. Please try again. Error: {str(e)}')
         else:
