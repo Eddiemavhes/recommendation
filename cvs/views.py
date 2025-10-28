@@ -8,33 +8,134 @@ from ml_models.job_matcher import JobMatcher
 @login_required
 def upload_cv(request):
     if request.method == 'POST':
-        if request.FILES.get('cv'):
-            cv_file = request.FILES['cv']
-            print(f"Received CV upload: {cv_file.name} ({cv_file.size} bytes)")
-            
-            # Validate file extension
-            if not cv_file.name.lower().endswith('.pdf'):
-                messages.error(request, 'Only PDF files are supported.')
+        try:
+            if not request.FILES.get('cv'):
+                messages.error(request, 'No file was uploaded. Please select a CV file.')
                 return render(request, 'cvs/upload.html')
+
+            cv_file = request.FILES['cv']
+            print(f"Received file: {cv_file.name}, size: {cv_file.size} bytes")
             
-            try:
-                # Initialize job matcher and process CV
-                job_matcher = JobMatcher()
-                print("JobMatcher initialized")
+            # Validate file size (max 5MB)
+            if cv_file.size > 5 * 1024 * 1024:
+                messages.error(request, 'File size too large. Maximum size is 5MB.')
+                return render(request, 'cvs/upload.html')
                 
-                # Create new CV instance
+            # Validate file extension and type
+            if not cv_file.name.lower().endswith('.pdf'):
+                messages.error(request, 'Invalid file type. Only PDF files are supported.')
+                return render(request, 'cvs/upload.html')
+                
+            # Ensure the file is actually readable
+            try:
+                # Try to read the start of the file to verify it's valid
+                first_bytes = cv_file.read(1024)
+                cv_file.seek(0)  # Reset file pointer to beginning
+                if not first_bytes.startswith(b'%PDF'):
+                    messages.error(request, 'The file appears to be corrupted or not a valid PDF.')
+                    return render(request, 'cvs/upload.html')
+            except Exception as e:
+                print(f"Error reading file: {str(e)}")
+                messages.error(request, 'Unable to read the uploaded file. Please try again.')
+                return render(request, 'cvs/upload.html')
+        
+        try:
+            try:
+                # Set all previous CVs as not current
+                CV.objects.filter(user=request.user, is_current=True).update(is_current=False)
+                
+                # Create new CV instance with detailed status
                 cv = CV.objects.create(
                     user=request.user,
                     file=cv_file,
-                    is_current=True
+                    is_current=True,
+                    status='uploaded',
+                    status_message='CV successfully uploaded, starting analysis...',
+                    progress=0,
+                    extracted_text='',  # Initialize with empty string
+                    extracted_skills=[]  # Initialize with empty list
                 )
-                print(f"Created CV record: {cv.id}, file saved at: {cv.file.path}")
+                print(f"Created new CV record with ID: {cv.id}")
+                messages.success(request, 'CV uploaded successfully! Analysis is starting...')
                 
-                # Process the CV using its ID
-                success = job_matcher.process_cv(cv.id)
-                print(f"CV processing result: {'success' if success else 'failed'}")
+                # Initialize job matcher
+                try:
+                    job_matcher = JobMatcher()
+                    print("JobMatcher initialized successfully")
+                except Exception as e:
+                    print(f"Error initializing JobMatcher: {str(e)}")
+                    cv.status = 'failed'
+                    cv.status_message = 'Failed to initialize analysis system.'
+                    cv.save()
+                    messages.error(request, 'Failed to initialize the analysis system. Please try again later.')
+                    return redirect('dashboard')
+                
+                # Update status to processing
+                cv.status = 'processing'
+                cv.status_message = 'Initializing CV analysis...'
+                cv.progress = 10
+                cv.save()
+                
+                # Start text extraction
+                cv.status = 'extracting_text'
+                cv.status_message = 'Extracting and analyzing CV content...'
+                cv.progress = 30
+                cv.save()
+                
+                try:
+                    print(f"Starting CV processing for ID: {cv.id}")
+                    # Process the CV using its ID
+                    success = job_matcher.process_cv(cv.id)
+                    print(f"CV processing result: {'success' if success else 'failed'}")
+                    
+                    if success:
+                        try:
+                            # Get the processed CV data
+                            cv_data = job_matcher.processed_cvs.get(cv.id)
+                            if cv_data:
+                                cv.extracted_text = cv_data.get('text', '')
+                                cv.extracted_skills = cv_data.get('skills', [])
+                            cv.status = 'completed'
+                            cv.status_message = 'CV analysis completed successfully!'
+                            cv.progress = 100
+                            cv.save()
+                            print(f"CV {cv.id} processed successfully")
+                            messages.success(request, 'CV analysis completed! You can now view your job matches.')
+                            return redirect('dashboard')
+                        except Exception as data_error:
+                            print(f"Error saving processed data: {str(data_error)}")
+                            raise
+                    else:
+                        cv.status = 'failed'
+                        cv.status_message = 'CV processing failed. Please ensure your PDF is text-searchable and try again.'
+                        cv.progress = 0
+                        cv.save()
+                        messages.error(request, 'CV processing failed. Please ensure your PDF is text-searchable and try again.')
+                
+                except Exception as e:
+                    print(f"Error processing CV: {str(e)}")
+                    cv.status = 'error'
+                    cv.status_message = f'Error during processing: {str(e)}'
+                    cv.progress = 0
+                    cv.save()
+                    messages.error(request, 'An error occurred during CV processing. Please try again or contact support.')
+                
+                return redirect('dashboard')
+                
+            except Exception as outer_error:
+                print(f"Outer exception in CV upload: {str(outer_error)}")
+                messages.error(request, 'An unexpected error occurred. Please try again or contact support.')
+                return redirect('dashboard')
+                
+    return render(request, 'cvs/upload.html')
                 
                 if success:
+                    # Update status to analyzing skills
+                    cv.status = 'analyzing_skills'
+                    cv.status_message = 'Analyzing skills from CV...'
+                    cv.progress = 60
+                    cv.save()
+                    
                     # Get the processed CV data
                     cv_data = job_matcher.processed_cvs.get(cv.id)
                     if cv_data:
@@ -42,6 +143,9 @@ def upload_cv(request):
                         print("Saving extracted data to CV record")
                         cv.extracted_text = cv_data.get('text', '')
                         cv.extracted_skills = cv_data.get('skills', [])
+                        cv.status = 'completed'
+                        cv.status_message = 'CV analysis completed successfully!'
+                        cv.progress = 100
                         cv.save()
                         
                         print(f"Updated CV {cv.id} with data:", {
