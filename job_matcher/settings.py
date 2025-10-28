@@ -160,6 +160,17 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files (Uploaded files)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Create media directories if they don't exist
+UPLOAD_DIRS = [
+    os.path.join(MEDIA_ROOT, 'cvs'),
+]
+for dir_path in UPLOAD_DIRS:
+    os.makedirs(dir_path, exist_ok=True)
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

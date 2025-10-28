@@ -1,17 +1,85 @@
+import os
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from .models import CV
 from ml_models.job_matcher import JobMatcher
 
+def ensure_upload_directory():
+    """Ensure the upload directory exists"""
+    upload_dir = os.path.join(settings.MEDIA_ROOT, 'cvs')
+    os.makedirs(upload_dir, exist_ok=True)
+    return upload_dir
+
 @login_required
 def upload_cv(request):
-    if request.method == 'POST':
-        try:
+    """Handle CV upload and processing"""
+    try:
+        # Ensure upload directory exists
+        ensure_upload_directory()
+        
+        if request.method == 'POST':
             if not request.FILES.get('cv'):
                 messages.error(request, 'No file was uploaded. Please select a CV file.')
                 return render(request, 'cvs/upload.html')
+
+            cv_file = request.FILES['cv']
+            
+            # Basic validations
+            if cv_file.size > 5 * 1024 * 1024:  # 5MB limit
+                messages.error(request, 'File size too large. Maximum size is 5MB.')
+                return render(request, 'cvs/upload.html')
+            
+            if not cv_file.name.lower().endswith('.pdf'):
+                messages.error(request, 'Invalid file type. Only PDF files are supported.')
+                return render(request, 'cvs/upload.html')
+
+            try:
+                # Set all previous CVs as not current
+                CV.objects.filter(user=request.user, is_current=True).update(is_current=False)
+                
+                # Create new CV instance
+                cv = CV.objects.create(
+                    user=request.user,
+                    file=cv_file,
+                    is_current=True,
+                    status='uploaded',
+                    status_message='Processing your CV...',
+                    progress=0
+                )
+                
+                # Initialize and run job matcher
+                job_matcher = JobMatcher()
+                success = job_matcher.process_cv(cv.id)
+                
+                if success:
+                    cv.status = 'completed'
+                    cv.status_message = 'CV processed successfully!'
+                    cv.progress = 100
+                    cv.save()
+                    messages.success(request, 'Your CV has been uploaded and processed successfully!')
+                else:
+                    cv.status = 'failed'
+                    cv.status_message = 'Failed to process CV'
+                    cv.progress = 0
+                    cv.save()
+                    messages.error(request, 'Failed to process your CV. Please try again.')
+                
+                return redirect('dashboard')
+                
+            except Exception as e:
+                print(f"Error processing CV: {str(e)}")
+                messages.error(request, 'An error occurred while processing your CV. Please try again.')
+                return render(request, 'cvs/upload.html')
+                
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        messages.error(request, 'An unexpected error occurred. Please try again later.')
+        return render(request, 'cvs/upload.html')
+    
+    return render(request, 'cvs/upload.html')
 
             cv_file = request.FILES['cv']
             print(f"Received file: {cv_file.name}, size: {cv_file.size} bytes")
