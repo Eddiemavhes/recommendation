@@ -5,33 +5,44 @@ from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm
 
 def login_view(request):
+    # Redirect if user is already logged in
     if request.user.is_authenticated:
         messages.info(request, 'You are already logged in.')
         return redirect('dashboard')
-        
+
+    # Handle login form submission
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
         
-        if not username or not password:
-            messages.error(request, 'Please provide both username and password.')
+        # Validate input
+        if not username:
+            messages.error(request, 'Please enter your username.')
             return render(request, 'accounts/login.html')
             
+        if not password:
+            messages.error(request, 'Please enter your password.')
+            return render(request, 'accounts/login.html')
+            
+        # Authenticate user
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            login(request, user)
-            messages.success(request, f'Welcome back, {user.username}! You have successfully logged in.')
-            
-            # Redirect to next URL if provided, otherwise to dashboard
-            next_url = request.GET.get('next')
-            if next_url:
-                messages.info(request, 'You were redirected to the page you tried to access.')
-                return redirect(next_url)
-            return redirect('dashboard')
+            if user.is_active:
+                login(request, user)
+                messages.success(request, f'Welcome back, {user.username}!')
+                
+                # Redirect to next URL if provided, otherwise to dashboard
+                next_url = request.GET.get('next')
+                if next_url:
+                    return redirect(next_url)
+                return redirect('dashboard')
+            else:
+                messages.error(request, 'Your account is not active. Please contact support.')
         else:
             messages.error(request, 'Invalid username or password. Please try again.')
-            
+    
+    # Display login form
     return render(request, 'accounts/login.html')
 
 def register_view(request):
