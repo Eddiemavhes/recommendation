@@ -11,11 +11,23 @@ def validate_file_extension(value):
         raise ValidationError('Only PDF files are supported.')
 
 class CV(models.Model):
+    STATUS_CHOICES = [
+        ('uploaded', 'Uploaded'),
+        ('processing', 'Processing'),
+        ('extracting_text', 'Extracting Text'),
+        ('analyzing_skills', 'Analyzing Skills'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed')
+    ]
+    
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cvs')
     file = models.FileField(upload_to='cvs/', validators=[validate_file_extension])
     extracted_text = models.TextField(blank=True)
     extracted_skills = models.JSONField(default=list)
     is_current = models.BooleanField(default=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='uploaded')
+    status_message = models.TextField(blank=True)
+    progress = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

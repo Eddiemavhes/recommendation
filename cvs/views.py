@@ -16,103 +16,81 @@ def ensure_upload_directory():
 @login_required
 def upload_cv(request):
     """Handle CV upload and processing"""
-    try:
-        # Ensure upload directory exists
-        ensure_upload_directory()
+    # Always ensure upload directory exists
+    ensure_upload_directory()
+    
+    if request.method != 'POST':
+        return render(request, 'cvs/upload.html')
         
-        if request.method == 'POST':
-            if not request.FILES.get('cv'):
-                messages.error(request, 'No file was uploaded. Please select a CV file.')
-                return render(request, 'cvs/upload.html')
+    if not request.FILES.get('cv'):
+        messages.error(request, 'No file was uploaded. Please select a CV file.')
+        return render(request, 'cvs/upload.html')
 
-            cv_file = request.FILES['cv']
-            
-            # Basic validations
-            if cv_file.size > 5 * 1024 * 1024:  # 5MB limit
-                messages.error(request, 'File size too large. Maximum size is 5MB.')
-                return render(request, 'cvs/upload.html')
-            
-            if not cv_file.name.lower().endswith('.pdf'):
-                messages.error(request, 'Invalid file type. Only PDF files are supported.')
-                return render(request, 'cvs/upload.html')
-
-            try:
-                # Set all previous CVs as not current
-                CV.objects.filter(user=request.user, is_current=True).update(is_current=False)
-                
-                # Create new CV instance
-                cv = CV.objects.create(
-                    user=request.user,
-                    file=cv_file,
-                    is_current=True,
-                    status='uploaded',
-                    status_message='Processing your CV...',
-                    progress=0
-                )
-                
-                # Initialize and run job matcher
-                job_matcher = JobMatcher()
-                success = job_matcher.process_cv(cv.id)
-                
-                if success:
-                    cv.status = 'completed'
-                    cv.status_message = 'CV processed successfully!'
-                    cv.progress = 100
-                    cv.save()
-                    messages.success(request, 'Your CV has been uploaded and processed successfully!')
-                else:
-                    cv.status = 'failed'
-                    cv.status_message = 'Failed to process CV'
-                    cv.progress = 0
-                    cv.save()
-                    messages.error(request, 'Failed to process your CV. Please try again.')
-                
-                return redirect('dashboard')
-                
-            except Exception as e:
-                print(f"Error processing CV: {str(e)}")
-                messages.error(request, 'An error occurred while processing your CV. Please try again.')
-                return render(request, 'cvs/upload.html')
-                
-    except Exception as e:
-        print(f"Unexpected error: {str(e)}")
-        messages.error(request, 'An unexpected error occurred. Please try again later.')
+    cv_file = request.FILES['cv']
+    
+    # Validate file size
+    if cv_file.size > 5 * 1024 * 1024:  # 5MB limit
+        messages.error(request, 'File size too large. Maximum size is 5MB.')
         return render(request, 'cvs/upload.html')
     
-    return render(request, 'cvs/upload.html')
+    # Validate file type
+    if not cv_file.name.lower().endswith('.pdf'):
+        messages.error(request, 'Invalid file type. Only PDF files are supported.')
+        return render(request, 'cvs/upload.html')
 
-            cv_file = request.FILES['cv']
-            print(f"Received file: {cv_file.name}, size: {cv_file.size} bytes")
-            
-            # Validate file size (max 5MB)
-            if cv_file.size > 5 * 1024 * 1024:
-                messages.error(request, 'File size too large. Maximum size is 5MB.')
-                return render(request, 'cvs/upload.html')
-                
-            # Validate file extension and type
-            if not cv_file.name.lower().endswith('.pdf'):
-                messages.error(request, 'Invalid file type. Only PDF files are supported.')
-                return render(request, 'cvs/upload.html')
-                
-            # Ensure the file is actually readable
-            try:
-                # Try to read the start of the file to verify it's valid
-                first_bytes = cv_file.read(1024)
-                cv_file.seek(0)  # Reset file pointer to beginning
-                if not first_bytes.startswith(b'%PDF'):
-                    messages.error(request, 'The file appears to be corrupted or not a valid PDF.')
-                    return render(request, 'cvs/upload.html')
-            except Exception as e:
-                print(f"Error reading file: {str(e)}")
-                messages.error(request, 'Unable to read the uploaded file. Please try again.')
-                return render(request, 'cvs/upload.html')
+    # Verify PDF content
+    try:
+        first_bytes = cv_file.read(1024)
+        cv_file.seek(0)  # Reset file pointer to beginning
+        if not first_bytes.startswith(b'%PDF'):
+            messages.error(request, 'The file appears to be corrupted or not a valid PDF.')
+            return render(request, 'cvs/upload.html')
+    except Exception as e:
+        print(f"Error reading file: {str(e)}")
+        messages.error(request, 'Unable to read the uploaded file. Please try again.')
+        return render(request, 'cvs/upload.html')
+
+    try:
+        # Set all previous CVs as not current
+        CV.objects.filter(user=request.user, is_current=True).update(is_current=False)
         
-        try:
-            try:
-                # Set all previous CVs as not current
-                CV.objects.filter(user=request.user, is_current=True).update(is_current=False)
-                
-                # Create new CV instance with detailed status
+        # Create new CV instance
+        cv = CV.objects.create(
+            user=request.user,
+            file=cv_file,
+            is_current=True,
+            status='uploaded',
+            status_message='Processing your CV...',
+            progress=0
+        )
+        
+        # Initialize and run job matcher
+        job_matcher = JobMatcher()
+        success = job_matcher.process_cv(cv.id)
+        
+        if success:
+            cv.status = 'completed'
+            cv.status_message = 'CV processed successfully!'
+            cv.progress = 100
+            cv.save()
+            messages.success(request, 'Your CV has been uploaded and processed successfully!')
+        else:
+            cv.status = 'failed'
+            cv.status_message = 'Failed to process CV'
+            cv.progress = 0
+            cv.save()
+            messages.error(request, 'Failed to process your CV. Please try again.')
+        
+        return redirect('dashboard')
+        
+    except ValidationError as e:
+        print(f"Validation error: {str(e)}")
+        messages.error(request, str(e))
+        return render(request, 'cvs/upload.html')
+    except Exception as e:
+        print(f"Error processing CV: {str(e)}")
+        messages.error(request, f'Error processing CV: {str(e)}')
+        return render(request, 'cvs/upload.html')
                 cv = CV.objects.create(
                     user=request.user,
                     file=cv_file,
